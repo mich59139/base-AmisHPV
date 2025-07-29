@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Base des articles – Amis de l’Histoire du Pays Vizillois</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      background-color: #fff;
+      padding: 1em 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header img {
+      max-height: 80px;
+    }
+    main {
+      max-width: 1100px;
+      margin: 2em auto;
+      padding: 0 1em;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    h1 {
+      text-align: center;
+      color: #003366;
+    }
+    p.intro {
+      text-align: justify;
+      font-size: 1.1em;
+      padding: 1em;
+    }
+    table {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="logo_ahpv.png" alt="Logo AHPV">
+</header>
+
+<main>
+  <h1>Base des articles de la revue « Mémoire »</h1>
+  <p class="intro">
+    Bienvenue sur la base des articles publiés par l'association <strong>Les Amis de l’Histoire du Pays Vizillois</strong> depuis sa création. 
+    Cette interface vous permet de consulter les contributions parues dans la revue <em>Mémoire</em>, classées par numéro, thème, époque ou auteur.<br><br>
+    Vous pouvez rechercher un mot-clé, trier les colonnes, choisir le nombre de lignes affichées, ou exporter les résultats.
+  </p>
+
+  <table id="data" class="display"></table>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script>
+  Papa.parse("base_ahpv_nettoyee.csv", {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const data = results.data;
+      const columns = Object.keys(data[0]).map(key => ({
+        title: key,
+        data: key
+      }));
+
+      $('#data').DataTable({
+        data: data,
+        columns: columns,
+        pageLength: 100,
+        lengthMenu: [ [25, 50, 100, -1], [25, 50, 100, "Tout afficher"] ],
+        language: {
+          url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json"
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
