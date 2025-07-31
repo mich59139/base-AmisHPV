@@ -1,169 +1,148 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Base AHPV - Recherche Avancée</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Catalogue AHPV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Librairies nécessaires -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/plug-ins/1.13.4/api/fnFilterOnReturn.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <!-- Extensions DataTables pour les boutons d’export et les volets de recherche -->
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/searchpanes/2.1.0/js/dataTables.searchPanes.min.js"></script>
   <script src="https://cdn.datatables.net/select/1.5.0/js/dataTables.select.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.1.0/css/searchPanes.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/select/1.5.0/css/select.dataTables.min.css">
-  <!-- Icônes FontAwesome pour illustrer les filtres -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.1.0/css/searchPanes.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/select/1.5.0/css/select.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f5f7fa;
       color: #333;
       margin: 30px;
     }
     h1 {
       text-align: center;
-      color: #005691;
+      color: #0a4d78;
+      font-size: 1.8em;
     }
     #logo {
       display: block;
-      margin: 0 auto 20px;
-      max-height: 120px;
+      margin: 0 auto 15px;
+      max-height: 100px;
     }
     table.dataTable thead th {
-      background-color: #e6f2fb;
+      background-color: #e9f1f7;
     }
-    tfoot input {
-      width: 100%;
-      padding: 3px;
-      box-sizing: border-box;
+    .data-source {
+      font-size: 0.9em;
+      text-align: center;
+      margin-top: 1em;
+      color: #666;
     }
   </style>
 </head>
-<body>
-  <img id="logo" src="logo_ahpv.png" alt="Logo AHPV">
-  <h1>Catalogue des publications des Amis de l’Histoire du Pays Vizillois</h1>
-  <!-- Ajout d’un pied de tableau pour accueillir les champs de recherche par colonne -->
-  <table id="data-table" class="display" style="width:100%">
-    <tfoot>
-      <tr></tr>
-    </tfoot>
-  </table>
 
-  <!-- Indication de la source des données -->
-  <p class="data-source" style="margin-top:10px; font-size:0.9em; text-align:center;">
-    Source des données :
-    <a href="base_ahpv_enriched_simplified.csv" download>base_ahpv_enriched_simplified.csv</a>
+<body>
+  <img id="logo" src="logo_ahpv.png" alt="Logo AHPV" />
+  <h1>Catalogue des publications des Amis de l’Histoire du Pays Vizillois</h1>
+
+  <table id="data-table" class="display" style="width: 100%"></table>
+
+  <p class="data-source">
+    Source des données : <a href="base_ahpv_enriched_simplified.csv" download>base_ahpv_enriched_simplified.csv</a>
   </p>
 
   <script>
-    // Charger la base de données enrichie. Celle-ci contient des colonnes supplémentaires
-    // (Siècle, début/fin de page, listes) et des valeurs nettoyées.
-    fetch('base_ahpv_enriched_simplified.csv')
-      .then(response => response.text())
-      .then(csv => {
+    fetch("base_ahpv_enriched_simplified.csv")
+      .then((response) => response.text())
+      .then((csv) => {
         Papa.parse(csv, {
           header: true,
           skipEmptyLines: true,
-          complete: function(results) {
+          complete: function (results) {
             const data = results.data;
-            // Définir manuellement les colonnes à afficher avec des titres francisés.
-            const columns = [
-              { title: 'Numéro', data: 'Numero' },
-              { title: 'Titre', data: 'Titre' },
-              { title: 'Pages', data: 'Pages' },
-              { title: 'Auteurs', data: 'Auteurs' },
-              { title: 'Villes', data: 'Villes', searchPanes: { show: true, header: '<i class="fa-solid fa-map-marker-alt"></i> Villes' } },
-              { title: 'Thèmes', data: 'Themes', searchPanes: { show: true, header: '<i class="fa-solid fa-tags"></i> Thèmes' } },
-              { title: 'Époque', data: 'Epoque', searchPanes: { show: true, header: '<i class="fa-solid fa-calendar-days"></i> Époque' } },
-              { title: 'Siècle', data: 'Siecle', searchPanes: { show: true, header: '<i class="fa-solid fa-clock"></i> Siècle' } },
-              // Colonnes techniques masquées pour les recherches/exports
-              { title: 'Début page', data: 'Page_Debut', visible: false },
-              { title: 'Fin page', data: 'Page_Fin', visible: false },
-              { title: 'Auteurs Liste', data: 'Auteurs_Liste', visible: false },
-              { title: 'Villes Liste', data: 'Villes_Liste', visible: false },
-              { title: 'Thèmes Liste', data: 'Themes_Liste', visible: false },
-              // Colonne d’action : un bouton pour afficher plus de détails
-              { title: 'Détails', data: null, defaultContent: "<button class='details-btn'>Détails</button>", orderable: false, searchable: false }
-            ];
-            // Initialisation du tableau DataTables
-            const table = $('#data-table').DataTable({
+            const table = $("#data-table").DataTable({
               data: data,
-              columns: columns,
-              // Activer SearchPanes et Buttons via le paramètre dom :
-              dom: 'PBlfrtip',
-              buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+              columns: [
+                { title: "Numéro", data: "Numero" },
+                { title: "Titre", data: "Titre" },
+                { title: "Pages", data: "Pages" },
+                { title: "Auteurs", data: "Auteurs" },
+                {
+                  title: '<i class="fa-solid fa-location-dot"></i> Villes',
+                  data: "Villes",
+                  searchPanes: { show: true }
+                },
+                {
+                  title: '<i class="fa-solid fa-tags"></i> Thèmes',
+                  data: "Themes",
+                  searchPanes: { show: true }
+                },
+                {
+                  title: '<i class="fa-solid fa-calendar-days"></i> Époque',
+                  data: "Epoque",
+                  searchPanes: { show: true }
+                },
+                {
+                  title: '<i class="fa-solid fa-clock"></i> Siècle',
+                  data: "Siecle",
+                  searchPanes: { show: true }
+                },
+                {
+                  title: "Détails",
+                  data: null,
+                  defaultContent:
+                    "<button class='details-btn'>Voir</button>",
+                  orderable: false,
+                  searchable: false,
+                },
+              ],
+              dom: "Plfrtip",
               searchPanes: {
-                // Les volets de recherche sont définis au niveau des colonnes (voir columns.searchPanes)
                 cascadePanes: true,
                 viewTotal: true,
-                initCollapsed: true
+                initCollapsed: true,
               },
-              order: [[0, 'asc']],
               pageLength: 25,
-              lengthMenu: [10, 25, 50, 100, 250],
+              lengthMenu: [10, 25, 50, 100],
               language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fr-FR.json'
+                url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/fr-FR.json",
               },
-              initComplete: function () {
-                // Ajouter des champs de recherche en pied de tableau pour chaque colonne visible (hors colonne d’action)
-                this.api().columns().every(function (idx) {
-                  const column = this;
-                  const colDef = columns[idx];
-                  if (!column.visible() || colDef.title === 'Détails') {
-                    return;
-                  }
-                  const input = document.createElement('input');
-                  input.placeholder = 'Rechercher...';
-                  $(input).appendTo($(column.footer()).empty())
-                    .on('keyup change clear', function () {
-                      if (column.search() !== this.value) {
-                        column.search(this.value).draw();
-                      }
-                    });
-                });
-              },
-              // Demander explicitement à DataTables de créer un pied de tableau s’il n’existe pas
-              footer: true
             });
-            // Générer le contenu HTML pour les détails d’une ligne
+
             function formatDetail(rowData) {
-              return `<div style="padding:10px;">
-  <strong>Numéro&nbsp;:</strong> ${rowData['Numero'] || ''}<br>
-  <strong>Titre&nbsp;:</strong> ${rowData['Titre'] || ''}<br>
-  <strong>Pages&nbsp;:</strong> ${rowData['Pages'] || ''} (${rowData['Page_Debut'] || ''} – ${rowData['Page_Fin'] || ''})<br>
-  <strong>Auteurs&nbsp;:</strong> ${rowData['Auteurs'] || ''}<br>
-  <strong>Villes&nbsp;:</strong> ${rowData['Villes'] || ''}<br>
-  <strong>Thèmes&nbsp;:</strong> ${rowData['Themes'] || ''}<br>
-  <strong>Époque&nbsp;:</strong> ${rowData['Epoque'] || ''} (Siècle&nbsp;: ${rowData['Siecle'] || ''})
-</div>`;
+              return `
+                <div style="padding:10px;">
+                  <strong>Titre :</strong> ${rowData["Titre"] || ""}<br>
+                  <strong>Pages :</strong> ${rowData["Pages"] || ""}<br>
+                  <strong>Auteurs :</strong> ${rowData["Auteurs"] || ""}<br>
+                  <strong>Villes :</strong> ${rowData["Villes"] || ""}<br>
+                  <strong>Thèmes :</strong> ${rowData["Themes"] || ""}<br>
+                  <strong>Époque :</strong> ${rowData["Epoque"] || ""} <br>
+                  <strong>Siècle :</strong> ${rowData["Siecle"] || ""}
+                </div>`;
             }
-            // Ajouter un gestionnaire d’événement sur le bouton de détails
-            $('#data-table tbody').on('click', 'button.details-btn', function () {
-              const tr = $(this).closest('tr');
+
+            $("#data-table tbody").on("click", "button.details-btn", function () {
+              const tr = $(this).closest("tr");
               const row = table.row(tr);
               if (row.child.isShown()) {
                 row.child.hide();
-                tr.removeClass('shown');
+                tr.removeClass("shown");
               } else {
                 row.child(formatDetail(row.data())).show();
-                tr.addClass('shown');
+                tr.addClass("shown");
               }
             });
-          }
+          },
         });
       })
-      .catch(error => {
-        document.body.innerHTML += "<p style='color:red;'>Erreur de chargement du fichier CSV.</p>";
+      .catch((error) => {
+        document.body.innerHTML +=
+          "<p style='color:red;'>Erreur de chargement du fichier CSV.</p>";
         console.error(error);
       });
   </script>
